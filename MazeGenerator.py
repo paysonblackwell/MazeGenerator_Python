@@ -2,12 +2,12 @@ import random
 import numpy as np
 
 from turtle import Turtle  # https://coolpythoncodes.com/python-turtle/
-
 """ 
 Created 1/11/18 by Payson Blackwell
 
 This program creates a maze in a 2D array, and then displays it using the Turtle graphics
 
+Updated it so you can move with the right arrow key for fun
  """
 
 
@@ -18,6 +18,7 @@ class Point:
         self.c = c
         self.parent = parent
 
+    # Returns wall opposite from you
     def opposite(self):
         if self.r > self.parent.r:
             return Point(self.r+1, self.c, self)
@@ -38,7 +39,6 @@ class Block:
         self.color = "blue"
         self.size = size
 
-
 class Maze:
     def __init__(self, row, col, xCoor = -375, yCoor = 350, blockSize = 25, hardPoints = True):
         self.row = row
@@ -46,10 +46,14 @@ class Maze:
         self.startXCoor = xCoor
         self.startYCoor = yCoor
         self.blockSize = blockSize
+        self.currentlyDrawing = False # to prevent drawing when currently drawing
 
         # initializing for start and end blocks Coordinates (usefull for randomaly placed blocks)
         self.startBlockCoors = list()
         self.endBlockCoors = list()
+
+        # initializing for Current x and y in array, very useful for walking through the maze
+        self.currentArrayLocation = list()
 
         # Fill all blocks as closed
         self.blocks = [[0 for x in range(self.col)] for y in range(self.row)]
@@ -83,26 +87,51 @@ class Maze:
         # Turns back on animation and puts turtle at starting block
         self.setUpForSolving()
 
-
     # Draws a block and moves the cursor to bottom left hand corner of new block, facing east of new 
-    def drawBlock(self, block):
-        # Draws a block if it is closed, start, or end
-        if block.state in ["closed", 'start', 'end', 'wall']:
-            self.t.color(block.color)
-            self.t.begin_fill()
-            # Draw the square
-            for steps in range(4):
+    def drawBlock(self, block, MovedOn = None, blockColor = None):
+        self.currentlyDrawing = True
+        # For drawing blocks normally
+        if MovedOn is None:
+            # Draws a block if it is closed, start, or end
+            if block.state in ["closed", 'start', 'end', 'wall']:
+                self.t.color(block.color)
+                self.t.begin_fill()
+                # Draw the square
+                for i in range(4):
+                    self.t.fd(block.size)
+                    self.t.right(90)
+                self.t.end_fill()
+
+            # Move to bottom left corner of block just made
+            self.t.up()
+            self.t.right(90)
+            self.t.fd(block.size)
+            self.t.down()
+            self.t.left(90)
+        else: # For drawing blocks when walking through the maze
+            if block.state in ['closed', 'wall']:
+                raise ValueError("Can't move on a Wall or closed Block!")
+            else:
+                # set color of block
+                if blockColor is None:
+                    self.t.color('yellow')
+                else:
+                    self.t.color(blockColor)
+
+                # Draw the square
+                self.t.down()
+                self.t.begin_fill()    
+                for i in range(4):
+                    self.t.fd(block.size)
+                    self.t.right(90)
+                self.t.end_fill()
+                               
+                # move to top right left of block just made
+                self.t.up()
+                
                 self.t.fd(block.size)
-                self.t.right(90)
-            self.t.end_fill()
-
-        # Move to bottom left corner of block just made
-        self.t.up()
-        self.t.right(90)
-        self.t.fd(block.size)
-        self.t.down()
-        self.t.left(90)
-
+        self.currentlyDrawing = False # set it back to False
+            
     # Calls Draw for each block
     def drawMaze(self):
         # Go through list and draw blocks
@@ -202,6 +231,7 @@ class Maze:
                 self.blocks[last.r][last.c].color = 'red'
                 self.endBlockCoors.append(last.r)
                 self.endBlockCoors.append(last.c)
+
     def setUpForSolving(self):
         # This function goes to the starting block and sets it up for someone to start finding a way to the end
 
@@ -210,27 +240,41 @@ class Maze:
         x = self.startXCoor + (self.blockSize * self.startBlockCoors[0])
         y = self.startYCoor - (self.blockSize * self.startBlockCoors[1])
 
+        # Adding visiting logic to starting block for later
+        self.blocks[self.startBlockCoors[0]][self.startBlockCoors[1]].visited += 2
+
+        # go to that location     
         self.t.goto(x , y)
+        self.t.fd(self.blockSize)
         self.t.down()
 
-        # change turtle color and turn drawing back on
+        # Gets current x and y coordinates of the block in the array
+        self.currentArrayLocation.append(self.startBlockCoors[0])
+        self.currentArrayLocation.append(self.startBlockCoors[1])
+
+        # change turtle color
         self.t.color("yellow")
         self.t.shape("turtle")
-        self.t.speed(1)
-        # Turn on animation
+        self.t.speed(0.5)
+        # Turn animation back on
         self.t.screen.tracer(1)
 
+    # This Function moves the turtle 1 block to the right if it is not a wall
+    def moveRight(self):
+        nextBlock = self.blocks[self.currentArrayLocation[0]+1][self.currentArrayLocation[1]]
+        #currentArrayLocation[0] == x, + 1 for the block to the right of current block
+        #self.currentArrayLocation[1] == y
 
-# start Maze with 30x30 grid
-maze = Maze(30, 30) 
+        #Won't move past a wall
+        if nextBlock.state == 'open' and self.currentlyDrawing is False:           
+            self.currentArrayLocation[0] += 1 # update current location
+            nextBlock.visited += 1
+            # draw the block 
+                # (Make sure you are on the top left corner of the block you want to draw)
+            self.drawBlock(nextBlock, True, 'yellow')           
+            
+            
 
-# exit screen when you click it
-maze.t.screen.exitonclick() 
 """
-# For customizing the maze: 
-maze = Maze(30, 30, -500, 400)  # Sets the X and Y coordinates of where to start the drawing
-
-maze = Maze(30, 30, -500, 400, 20)  # Sets the individual blocks size
-
-maze = Maze(30, 30, -500, 400, 20, False) # Randomly place the start and end points
+Code testing for this file is in MazeTester.py
 """
