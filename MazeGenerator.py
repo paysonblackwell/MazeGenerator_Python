@@ -7,7 +7,7 @@ Created 1/11/18 by Payson Blackwell
 
 This program creates a maze in a 2D array, and then displays it using the Turtle graphics
 
-Updated it so you can move with the right arrow key for fun
+Updated: You can move with the right arrow key for fun
  """
 
 
@@ -48,7 +48,7 @@ class Maze:
         self.blockSize = blockSize
         self.currentlyDrawing = False # to prevent drawing when currently drawing
 
-        # initializing for start and end blocks Coordinates (usefull for randomaly placed blocks)
+        # initializing for start and end blocks Coordinates (usefull for randomly placed blocks)
         self.startBlockCoors = list()
         self.endBlockCoors = list()
 
@@ -97,7 +97,7 @@ class Maze:
                 self.t.color(block.color)
                 self.t.begin_fill()
                 # Draw the square
-                for i in range(4):
+                for _ in range(4):
                     self.t.fd(block.size)
                     self.t.right(90)
                 self.t.end_fill()
@@ -121,7 +121,7 @@ class Maze:
                 # Draw the square
                 self.t.down()
                 self.t.begin_fill()    
-                for i in range(4):
+                for _ in range(4):
                     self.t.fd(block.size)
                     self.t.right(90)
                 self.t.end_fill()
