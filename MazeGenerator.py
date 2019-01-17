@@ -112,8 +112,7 @@ class Maze:
             self.t.left(90)
         else: # For drawing blocks when walking through the maze
             if block.state in ['closed', 'wall']:
-                # raise ValueError("Can't move on a Wall or closed Block!")
-                return False
+                raise ValueError("Can't move on a Wall or closed Block!")
             else:
                 # set color of block
                 if blockColor is None:
@@ -133,9 +132,6 @@ class Maze:
                 self.t.up()
                 
                 self.t.fd(block.size)
-
-                # return True for valid move
-                return True
         self.currentlyDrawing = False # set it back to False
             
     # Calls Draw for each block
@@ -278,12 +274,49 @@ class Maze:
             nextBlock.visited += 1
             # draw the block 
                 # (Make sure you are on the top left corner of the block you want to draw)
-            self.drawBlock(nextBlock, True, 'yellow')
-            return True
-        else:
-            return False           
+            self.drawBlock(nextBlock, True, 'yellow')          
             
-            
+     # TODO: You need to make a moveLeft, moveUp, and a moveDown function
+        """ 
+        Notes:
+            For the grid, currentArrayLocation[0] is the X coordinate and currentArrayLocation[1] is the Y.
+                (0,0) is the top lefthand corner
+                to move to the right, add 1 to x
+                to move up, add 1 to y
+
+            If you have errors like you can move past walls or still going to the right even though you are pressing left, 
+                That means you are probably out of sync with the currentArrayLocation, ie: Where the maze thinks you currently are, and where the screen is drawing you
+
+
+
+            The way the program draws the squares for the pathway, is to call drawBlack(), 
+            by default the program assumes that the turtle object is facing to the right (East), and makes the square by moving the block size and turning 90 degrees enough times to create a square
+
+            You can change DrawBlock to suite you, or use it the way it currently is, which makes a block starting on the top left-hand corner
+
+            If for example you want to draw a block going down where you currently are, you need to do the following things:
+                * Check if the block vertically down one (or south) of you is open. ie: nextBlock = self.blocks[self.currentArrayLocation[0]][self.currentArrayLocation[1]+1]
+                * update the coresponding coordinate, ie:  self.currentArrayLocation[1] += 1
+                * add one to nextBlock.visited to show we will have visited it at least once
+                * Move the cursor of the turtle to be in the top left hand corner of the block we want to draw
+                    *If we assume we are facing to the right on the top right hand corner of the last block just drawn: These are the steps to move the turtle cursor to the top left hand side, facing left, of new block to draw
+                        call self.t.up() to stop drawing
+                        Turn to the right 90 degrees to turn facing downwards
+                        go forward a blocksize to be at the bottomright hand corner of the block
+                        Turn right 90 degrees to face left and move forward a block size to be at the top left hand corner of the new block
+                        Turn to the right 180 degrees to face towards the right again, which means to draw the block, all that is left is to call self.drawBlack(nextBlock)
+                
+
+        For the Algorithm to solve the maze, you may want to add some additionally functionality to the maze to make your life easier
+            *Such as a function that returns True or False that checks if you can move in a certain direction, ex: checkRight(), or returns the type of the block (open, wall, exit)
+            *A function that returns if we are currently on the exit
+            *Changing the path the turtle makes based on how many times a block has been visited
+            *Changing the speed/size of the path
+
+            Ideally after those changes, you won't need to mess with the MazeGenerator file, and build all you need in your solving file
+        """
+
+
 
 """
 Code testing for this file is in MazeTester.py
