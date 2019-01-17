@@ -110,7 +110,8 @@ class Maze:
             self.t.left(90)
         else: # For drawing blocks when walking through the maze
             if block.state in ['closed', 'wall']:
-                raise ValueError("Can't move on a Wall or closed Block!")
+                # raise ValueError("Can't move on a Wall or closed Block!")
+                return False
             else:
                 # set color of block
                 if blockColor is None:
@@ -130,6 +131,9 @@ class Maze:
                 self.t.up()
                 
                 self.t.fd(block.size)
+
+                # return True for valid move
+                return True
         self.currentlyDrawing = False # set it back to False
             
     # Calls Draw for each block
@@ -260,6 +264,7 @@ class Maze:
         self.t.screen.tracer(1)
 
     # This Function moves the turtle 1 block to the right if it is not a wall
+    # Return True if it moved, False if it didn't
     def moveRight(self):
         nextBlock = self.blocks[self.currentArrayLocation[0]+1][self.currentArrayLocation[1]]
         #currentArrayLocation[0] == x, + 1 for the block to the right of current block
@@ -271,7 +276,10 @@ class Maze:
             nextBlock.visited += 1
             # draw the block 
                 # (Make sure you are on the top left corner of the block you want to draw)
-            self.drawBlock(nextBlock, True, 'yellow')           
+            self.drawBlock(nextBlock, True, 'yellow')
+            return True
+        else:
+            return False           
             
             
 
