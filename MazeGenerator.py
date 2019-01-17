@@ -55,8 +55,10 @@ class Maze:
         # initializing for Current x and y in array, very useful for walking through the maze
         self.currentArrayLocation = list()
 
-        # Fill all blocks as closed
+        #Make a X by Y 2d array filled with 0's
         self.blocks = [[0 for x in range(self.col)] for y in range(self.row)]
+
+        # Fill all blocks as closed
         for i in range(self.row):
             for j in range(self.col):
                 self.blocks[i][j] = Block('closed', blockSize)
