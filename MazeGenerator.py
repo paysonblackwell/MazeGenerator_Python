@@ -39,6 +39,16 @@ class Block:
         self.color = "blue"
         self.size = size
 
+        # For deciding where to go, used in MazeTester
+        self.direction = ""
+        # For deciding ties on visited blocks
+        self.turnMovedOn = 0
+        # For dead ends
+        self.deadEnd = False
+        # For dealing with intersection
+        self.availableMoves = 0
+
+
 class Maze:
     def __init__(self, row, col, xCoor = -375, yCoor = 350, blockSize = 25, hardPoints = True):
         self.row = row
@@ -47,6 +57,8 @@ class Maze:
         self.startYCoor = yCoor
         self.blockSize = blockSize
         self.currentlyDrawing = False # to prevent drawing when currently drawing
+        self.currentTurn = 0 # keep track of how many moves
+
 
         # initializing for start and end blocks Coordinates (usefull for randomly placed blocks)
         self.startBlockCoors = list()
@@ -65,8 +77,8 @@ class Maze:
 
         # Setting up Turtle for drawing
         self.t = Turtle()
-        self.t.screen.bgcolor('orange')
-        self.t.color("blue")
+        self.t.screen.bgcolor('peach puff')
+        self.t.color("dark slate gray")
         self.t.shape("turtle")
         self.t.speed(0)
 
@@ -90,7 +102,7 @@ class Maze:
         self.setUpForSolving()
 
     # Draws a block and moves the cursor to bottom left hand corner of new block, facing east of new 
-    def drawBlock(self, block, MovedOn = None, blockColor = None):
+    def drawBlock(self, block, MovedOn = None,stopColoring = False):
         self.currentlyDrawing = True
         # For drawing blocks normally
         if MovedOn is None:
@@ -114,19 +126,38 @@ class Maze:
             if block.state in ['closed', 'wall']:
                 raise ValueError("Can't move on a Wall or closed Block!")
             else:
-                # set color of block
-                if blockColor is None:
-                    self.t.color('yellow')
-                else:
-                    self.t.color(blockColor)
+                self.currentTurn += 1
 
-                # Draw the square
-                self.t.down()
-                self.t.begin_fill()    
+                block.turnMovedOn = self.currentTurn
+
+                # set color of block
+                if(block.visited <= 1):
+                    self.t.color('yellow')
+                elif(block.visited == 2):
+                    self.t.color('goldenrod')
+                elif(block.visited == 3):
+                    self.t.color('chocolate')
+                elif(block.visited == 4):
+                    self.t.color('saddle brown')
+                elif(block.visited == 5):
+                    self.t.color('maroon')
+                else:
+                    self.t.color('black')
+
+
+                # Draw the square           
+                if(stopColoring):
+                    self.t.up()
+                else:
+                    self.t.down()
+                    self.t.begin_fill()   
+                  
                 for _ in range(4):
                     self.t.fd(block.size)
                     self.t.right(90)
-                self.t.end_fill()
+
+                if(not stopColoring):
+                    self.t.end_fill()
                                
                 # move to top right left of block just made
                 self.t.up()
@@ -274,9 +305,85 @@ class Maze:
             nextBlock.visited += 1
             # draw the block 
                 # (Make sure you are on the top left corner of the block you want to draw)
-            self.drawBlock(nextBlock, True, 'yellow')          
+            self.drawBlock(nextBlock, True)          
             
-     # TODO: You need to make a moveLeft, moveUp, and a moveDown function
+    def moveLeft(self):
+        nextBlock = self.blocks[self.currentArrayLocation[0]-1][self.currentArrayLocation[1]]
+
+        if nextBlock.state == 'open' and self.currentlyDrawing is False:           
+            self.currentArrayLocation[0] -= 1 # update current location
+            nextBlock.visited += 1
+            # Make sure you are on the top left corner of the block you want to draw)
+            self.t.up()
+            self.t.back(self.blockSize*2)
+            self.t.down()
+            self.drawBlock(nextBlock, True)
+
+    def moveDown(self):
+        nextBlock = self.blocks[self.currentArrayLocation[0]][self.currentArrayLocation[1]+1]
+        if nextBlock.state == 'open' and self.currentlyDrawing is False:           
+            self.currentArrayLocation[1] += 1 # update current location
+            nextBlock.visited += 1
+            # Make sure you are on the top left corner of the block you want to draw)
+            self.t.up()
+            self.t.back(self.blockSize)
+            self.t.right(90)
+            self.t.fd(self.blockSize)
+            self.t.left(90)
+            self.t.down()
+            self.drawBlock(nextBlock, True)
+
+    def moveUp(self):
+        nextBlock = self.blocks[self.currentArrayLocation[0]][self.currentArrayLocation[1]-1]
+        if nextBlock.state == 'open' and self.currentlyDrawing is False:           
+            self.currentArrayLocation[1] -= 1 # update current location
+            nextBlock.visited += 1
+            # Make sure you are on the top left corner of the block you want to draw)
+            self.t.up()
+            self.t.back(self.blockSize)
+            self.t.left(90)
+            self.t.fd(self.blockSize)
+            self.t.right(90)
+            self.t.down()
+            self.drawBlock(nextBlock, True)
+    
+    def moveDirection(self, direction = ""):
+        if(direction == 'right'):
+            self.moveRight()
+        elif(direction == "left"):
+            self.moveLeft()
+        elif(direction == "up"):
+            self.moveUp()
+        elif(direction == "down"):
+            self.moveDown()
+
+    # returns the type of the block that is next to the current block, returns block instead if parameter is True
+    def checkSpace(self, direction = "", returnBlock = False):
+        if(direction == "right"):
+            if(returnBlock is False):  
+                return self.blocks[self.currentArrayLocation[0]+1][self.currentArrayLocation[1]].state # ["closed", 'start', 'end', 'wall','open']:
+            else:
+                return self.blocks[self.currentArrayLocation[0]+1][self.currentArrayLocation[1]]
+        elif(direction == "left"):
+    
+            if(returnBlock is False):  
+                return self.blocks[self.currentArrayLocation[0]-1][self.currentArrayLocation[1]].state
+            else:
+                return self.blocks[self.currentArrayLocation[0]-1][self.currentArrayLocation[1]]           
+        elif(direction == "up"):      
+            if(returnBlock is False):  
+                return self.blocks[self.currentArrayLocation[0]][self.currentArrayLocation[1]-1].state
+            else:
+                return self.blocks[self.currentArrayLocation[0]][self.currentArrayLocation[1]-1]
+        elif(direction == "down"):
+            if(returnBlock is False):  
+                return self.blocks[self.currentArrayLocation[0]][self.currentArrayLocation[1]+1].state
+            else:
+                return self.blocks[self.currentArrayLocation[0]][self.currentArrayLocation[1]+1]
+        else:
+            return "invalid"
+
+
         """ 
         Notes:
             For the grid, currentArrayLocation[0] is the X coordinate and currentArrayLocation[1] is the Y.
